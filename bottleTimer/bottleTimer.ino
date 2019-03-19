@@ -36,21 +36,21 @@ int show = 1;
 
 //the pins of 4-digit 7-segment display attach to pin2-13 respectively
 
-int a = 2;
-int b = 3;
-int c = 4;
-int d = 5;
-int e = 6;
-int f = 7;
-int g = 8;
-int p = 9;
+int a = 3;
+int b = 7;
+int c = 10;
+int d = 12;
+int e = 13;
+int f = 4;
+int g = 9;
+int p = 11;
 
-int d4 = 10;
-int d3 = 11;
-int d2 = 12;
-int d1 = 13;
-/*value = EEPROM.read(address);*/
-long total = 200;
+int d4 = 8;
+int d3 = 6;
+int d2 = 5;
+int d1 = 2;
+
+long total = 0;
 long n = 0;// n represents the value displayed on the LED display. For example, when n=0, 0000 is displayed. The maximum value is 9999. 
 int del = 5;//Set del as 5; the value is the degree of fine tuning for the clock
 int count = 0;//Set count=0. Here count is a count value that increases by 1 every 0.1 second, which means 1 second is counted when the value is 10
