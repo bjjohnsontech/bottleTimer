@@ -15,40 +15,40 @@ const int BUTTONS_TOTAL = 5;
 // find out what the value of analogRead is when you press each of your buttons and put them in this array
 // you can find this out by putting Serial.println(analogRead(BUTTONS_PIN)); in your loop() and opening the serial monitor to see the values
 // make sure they are in order of smallest to largest
-const int BUTTONS_VALUES[BUTTONS_TOTAL] = {0, 90, 167, 232, 576};
+const int BUTTONS_VALUES[BUTTONS_TOTAL] = {0, 854, 931, 960, 975};
 
 // you can also define constants for each of your buttons, which makes your code easier to read
 // define these in the same order as the numbers in your BUTTONS_VALUES array, so whichever button has the smallest analogRead() number should come first
 const int sixtyBtn = 0;
 const int ninetyBtn = 1;
-const int dnBtn = 2;
-const int upBtn = 3;
-const int showBtn = 4;
+const int dnBtn = 3;
+const int upBtn = 4;
+const int showBtn = 2;
 
 // make an AnalogMultiButton object, pass in the pin, total and values array
 AnalogMultiButton buttons(BUTTONS_PIN, BUTTONS_TOTAL, BUTTONS_VALUES);
 
-const int beeperPin = 19;
-const int ledPin = 18;
+const int beeperPin = A6;
+const int ledPin = A3;
 
-int ledState = 0;
-int show = 1;
+bool ledState = false;
+bool show = true;
 
 //the pins of 4-digit 7-segment display attach to pin2-13 respectively
 
-int a = 3;
-int b = 7;
-int c = 10;
-int d = 12;
-int e = 13;
-int f = 4;
-int g = 9;
-int p = 11;
+int a = 11;
+int b = 3;
+int c = 6;
+int d = 10;
+int e = 12;
+int f = 9;
+int g = 4;
+int p = 8;
 
-int d4 = 8;
-int d3 = 6;
-int d2 = 5;
-int d1 = 2;
+int d4 = 2;
+int d3 = 5;
+int d2 = 7;
+int d1 = 13;
 
 long total = 0;
 long n = 0;// n represents the value displayed on the LED display. For example, when n=0, 0000 is displayed. The maximum value is 9999. 
@@ -96,7 +96,11 @@ void loop() {
     resetTotal();
   } else if (buttons.onPressAfter(upBtn, 2000)){
     setTotal();
-  } else if (buttons.onPress(sixtyBtn)) {
+  } else if (buttons.onPressAfter(showBtn, 2000)){
+    show = true;
+    lock();
+  } else if (buttons.onPress(sixtyBtn) && ledState == 0) {
+  
     n = 60;
     Timer1.attachInterrupt( countDown ); 
     while (n>0){
@@ -124,9 +128,9 @@ void loop() {
   
 }
 
-void ledControl(int state){
+void ledControl(bool state){
   ledState = state;
-  if (state == 1){
+  if (state){
     digitalWrite(ledPin,HIGH);
   } else {
     digitalWrite(ledPin,LOW);
@@ -151,9 +155,9 @@ void resetTotal(){
 }
 
 void setTotal(){
-  bool done = 0;
+  bool done = false;
   int store = total + 0;
-  while (done == 0){
+  while (!done){
     buttons.update();
     displayOn(total);
     if(buttons.isPressed(upBtn))
@@ -165,11 +169,11 @@ void setTotal(){
       total -= 1;
     }
     if(buttons.onPress(sixtyBtn)){
-      done = 1;
+      done = true;
       total = store;
     }
     if(buttons.onPress(ninetyBtn)){
-      done = 2;
+      done = true;
       EEPROM.updateInt(0, total);
     }
     delay(50);
@@ -191,7 +195,6 @@ bool confirm(int confirm, int cancel){
 
 void countDown()
 {
-  // Toggle LED
   count ++;
   if(count == 10)
   {
@@ -200,11 +203,73 @@ void countDown()
   }
 }
 
+/*
+  Showing number 0-9 on a Common Anode 7-segment LED display
+  Displays the numbers 0-9 on the display, with one second inbetween.
+    A
+   ---
+F |   | B
+  | G |
+   ---
+E |   | C
+  |   |
+   ---
+    D
+  This example code is in the public domain.
+*/
+void lock(){
+  bool locked = true;
+  while (locked){
+    buttons.update();
+    if (show){
+      clearLEDs();
+      pickDigit(1);//Light up 7-segment display d1
+      digitalWrite(a, LOW);
+      digitalWrite(b, LOW);
+      digitalWrite(c, LOW);
+      digitalWrite(d, HIGH);
+      digitalWrite(e, HIGH);
+      digitalWrite(f, HIGH);
+      digitalWrite(g, LOW);
+      digitalWrite(p, LOW);
+      delay(del);//delay 5ms
+      pickDigit(2);
+      digitalWrite(a, LOW);
+      digitalWrite(b, LOW);
+      digitalWrite(c, HIGH);
+      digitalWrite(d, HIGH);
+      digitalWrite(e, HIGH);
+      digitalWrite(f, LOW);
+      digitalWrite(g, HIGH);
+      digitalWrite(p, LOW);
+      delay(del);
+      pickDigit(3);
+      digitalWrite(a, LOW);
+      digitalWrite(b, LOW);
+      digitalWrite(c, LOW);
+      digitalWrite(d, HIGH);
+      digitalWrite(e, HIGH);
+      digitalWrite(f, LOW);
+      digitalWrite(g, HIGH);
+      digitalWrite(p, HIGH);
+      delay(del);
+    } else {
+      displayOff();
+    }
+    if (buttons.onPressAfter(showBtn, 2000)){
+      show = true;
+      locked = false;
+    } else if (buttons.onPress(showBtn)) {
+      toggleShow();
+    }
+  }
+}
+
 void toggleShow(){
-  if (show == 1){
-    show = 0;
+  if (show){
+    show = false;
   } else {
-    show = 1;
+    show = true;
   }
 }
 
@@ -223,6 +288,7 @@ void beep(int beeps, int len){
 void displayOff(){
   clearLEDs();
 }
+
 void displayOn(long num)
 {
   //clearLEDs();//clear the 7-segment display screen
